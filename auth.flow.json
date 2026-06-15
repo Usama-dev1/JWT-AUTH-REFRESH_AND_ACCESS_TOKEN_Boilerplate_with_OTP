@@ -1,0 +1,134 @@
+// this file for future refrence to understand the flow of this auth system 
+
+{
+  "project": "Node.js Auth System",
+  "stack": ["Node.js", "Express", "MongoDB", "Mongoose", "JWT", "Nodemailer", "Gmail OAuth2"],
+  "models": {
+    "User": {
+      "fields": ["username", "email", "password (sha256 hashed)", "verified (boolean, default false)"],
+      "collection": "users"
+    },
+    "Session": {
+      "fields": ["user (ref)", "refreshTokenHash", "ip", "userAgent", "revoked (boolean, default false)", "createdAt (TTL indexed, expires after 7 days)"],
+      "collection": "sessions"
+    },
+    "OTP": {
+      "fields": ["email", "user (ref)", "otpHash (sha256 hashed)"],
+      "collection": "otps",
+      "note": "No TTL set yet, should be added"
+    }
+  },
+  "endpoints": {
+    "POST /api/auth/register": {
+      "input": ["username", "email", "password"],
+      "flow": [
+        "Check if username or email already exists → 409 if so (BUG: missing return, execution continues)",
+        "Hash password with SHA256",
+        "Create user with verified: false",
+        "Generate OTP, hash it, save to otps collection",
+        "Send OTP to email via Nodemailer Gmail OAuth2"
+      ],
+      "response": "201 with username, email, verified"
+    },
+    "GET /api/auth/verify-email": {
+      "input": ["otp", "email"],
+      "flow": [
+        "Hash the incoming OTP",
+        "Find matching OTP doc by email and otpHash",
+        "Set user.verified = true",
+        "Delete all OTPs for that user"
+      ],
+      "response": "200 with username, email, verified",
+      "bugs": ["Should be POST not GET — req.body unreliable on GET"]
+    },
+    "POST /api/auth/login": {
+      "input": ["email", "password"],
+      "flow": [
+        "Find user by email → 401 if not found",
+        "Check user.verified → 401 if false",
+        "Hash password and compare → 401 if mismatch",
+        "Sign refresh token (JWT, 7d) with userId",
+        "Hash refresh token and store in new session document with ip and userAgent",
+        "Sign access token (JWT, 15m) with userId and sessionId",
+        "Set refresh token in httpOnly secure sameSite cookie",
+        "Return access token in JSON response"
+      ],
+      "response": "200 with username, email, accessToken"
+    },
+    "GET /api/auth/get-me": {
+      "input": ["Authorization: Bearer <accessToken> header"],
+      "flow": [
+        "Extract token from Authorization header",
+        "Verify JWT",
+        "Fetch user by decoded id"
+      ],
+      "response": "200 with username, email"
+    },
+    "GET /api/auth/refresh-token": {
+      "input": ["refreshToken cookie"],
+      "flow": [
+        "Read refresh token from cookie",
+        "Verify JWT",
+        "Hash it and find session where refreshTokenHash matches and revoked: false → 401 if not found",
+        "Sign new access token (15m) with userId (BUG: sessionId not included unlike login)",
+        "Sign new refresh token (7d) with userId",
+        "Update session with new refresh token hash (token rotation)",
+        "Set new refresh token in cookie"
+      ],
+      "response": "200 with new accessToken"
+    },
+    "GET /api/auth/logout": {
+      "input": ["refreshToken cookie"],
+      "flow": [
+        "Read refresh token from cookie",
+        "Hash it and find session where refreshTokenHash matches and revoked: false",
+        "Set session.revoked = true",
+        "Clear refresh token cookie"
+      ],
+      "response": "200 logged out"
+    },
+    "GET /api/auth/logout-all": {
+      "input": ["refreshToken cookie"],
+      "flow": [
+        "Read refresh token from cookie",
+        "Verify JWT to get userId",
+        "Set revoked: true on ALL sessions for that user",
+        "Clear refresh token cookie"
+      ],
+      "response": "200 logged out from all devices"
+    }
+  },
+  "token_strategy": {
+    "access_token": {
+      "expiry": "15m",
+      "storage": "client memory / Authorization header",
+      "payload": ["userId", "sessionId"]
+    },
+    "refresh_token": {
+      "expiry": "7d",
+      "storage": "httpOnly secure sameSite cookie",
+      "payload": ["userId"],
+      "rotation": true,
+      "stored_as_hash": true
+    }
+  },
+  "session_management": {
+    "revoke_on_logout": true,
+    "revoke_all_on_logout_all": true,
+    "ttl_cleanup": "MongoDB TTL index on createdAt, expireAfterSeconds: 604800 (7 days)",
+    "tracks": ["ip", "userAgent", "revoked status", "createdAt"]
+  },
+  "known_bugs": [
+    "register: missing return before 409 response — execution continues and crashes",
+    "verify-email: on GET route but uses req.body — should be POST",
+    "refresh-token: new access token does not include sessionId unlike login flow",
+    "passwords hashed with SHA256 — not safe, no salting, should use bcrypt or argon2",
+    "OTP model has no TTL — OTPs never expire automatically"
+  ],
+  "email_service": {
+    "provider": "Gmail",
+    "method": "OAuth2 via Nodemailer",
+    "config_keys": ["GOOGLE_USER", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"]
+  }
+}
+
