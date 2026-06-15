@@ -10,6 +10,8 @@ A robust Node.js authentication system featuring dynamic access and refresh toke
 *   **OTP Verification**: Secure email-based OTP verification for user registration and password resets.
 *   **Role-Based Authentication**: Middleware to restrict route access based on user roles (e.g., User, Admin).
 
+💡 AI-Ready Specification
+This repository includes an architectural JSON map (auth-flow.json or similar) explicitly designed for AI assistants, LLMs, and code generation agents. It allows AI tools to instantly understand the state, schemas, token rotation strategies, and endpoints of the codebase without needing to trace files manually.
 ---
 
 ## 🛠️ Database Architecture (Models)
