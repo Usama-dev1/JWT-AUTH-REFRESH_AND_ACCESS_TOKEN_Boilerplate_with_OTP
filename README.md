@@ -10,8 +10,6 @@ A robust Node.js authentication system featuring dynamic access and refresh toke
 *   **OTP Verification**: Secure email-based OTP verification for user registration and password resets.
 *   **Role-Based Authentication**: Middleware to restrict route access based on user roles (e.g., User, Admin).
 
-💡 AI-Ready Specification
-This repository includes an architectural JSON map (auth-flow.json or similar) explicitly designed for AI assistants, LLMs, and code generation agents. It allows AI tools to instantly understand the state, schemas, token rotation strategies, and endpoints of the codebase without needing to trace files manually.
 ---
 
 ## 🛠️ Database Architecture (Models)
@@ -56,5 +54,10 @@ ACCESS_TOKEN_SECRET=your_access_token_secret_here
 REFRESH_TOKEN_SECRET=your_refresh_token_secret_here
 
 # Email Service Config (Brevo API)
+
+
+💡 AI-Ready Specification
+This repository includes an architectural JSON map (auth-flow.json or similar) explicitly designed for AI assistants, LLMs, and code generation agents. It allows AI tools to instantly understand the state, schemas, token rotation strategies, and endpoints of the codebase without needing to trace files manually.
+
 # Note: You can swap this out for SendGrid, Mailgun, or Nodemailer if preferred.
 BREVO_API_KEY=your_brevo_api_key_here
