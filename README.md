@@ -37,6 +37,12 @@ Temporarily stores secure hashes for email verification.
 
 ---
 
+
+💡 AI-Ready Specification
+This repository includes an architectural JSON map (auth-flow.json or similar) explicitly designed for AI assistants, LLMs, and code generation agents. It allows AI tools to instantly understand the state, schemas, token rotation strategies, and endpoints of the codebase without needing to trace files manually.
+
+
+
 ## ⚙️ Environment Configuration
 
 To run this project, you need to configure your environment variables. Create a `.env` file in the root directory of your project and populate it with the variables below:
@@ -56,8 +62,6 @@ REFRESH_TOKEN_SECRET=your_refresh_token_secret_here
 # Email Service Config (Brevo API)
 
 
-💡 AI-Ready Specification
-This repository includes an architectural JSON map (auth-flow.json or similar) explicitly designed for AI assistants, LLMs, and code generation agents. It allows AI tools to instantly understand the state, schemas, token rotation strategies, and endpoints of the codebase without needing to trace files manually.
 
 # Note: You can swap this out for SendGrid, Mailgun, or Nodemailer if preferred.
 BREVO_API_KEY=your_brevo_api_key_here
